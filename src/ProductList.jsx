@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import './ProductList.css';
 import CartItem from './CartItem';
+import { useDispatch, useSelector } from 'react-redux';
+import { addItem } from './CartSlice';
 
 function ProductList({ onHomeClick }) {
   const [showCart, setShowCart] = useState(false);
   const [showPlants, setShowPlants] = useState(false);
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items); // 🔹 acceso al estado global del carrito
 
   const plantsArray = [
     {
@@ -93,9 +97,17 @@ function ProductList({ onHomeClick }) {
     setShowCart(false);
   };
 
-  // ✅ Nueva función para Task 1
+  // ✅ Task 4 – agregar producto al carrito usando Redux
   const handleAddToCart = (plant) => {
-    console.log(`Added to cart: ${plant.name}`);
+    const itemExists = cartItems.find(item => item.name === plant.name);
+    if (!itemExists) {
+      dispatch(addItem({ ...plant, quantity: 1 }));
+    }
+  };
+
+  // ✅ Task 4 – contar total de productos en el carrito
+  const calculateTotalQuantity = () => {
+    return cartItems ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
   };
 
   return (
@@ -125,7 +137,7 @@ function ProductList({ onHomeClick }) {
           <div>
             <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}>
               <h1 className="cart">
-                🛒
+                🛒 {calculateTotalQuantity()} {/* 🔹 muestra el total de productos */}
               </h1>
             </a>
           </div>
@@ -139,24 +151,28 @@ function ProductList({ onHomeClick }) {
             <div key={index}>
               <h1>{category.category}</h1>
               <div className="product-list">
-                {category.plants.map((plant, plantIndex) => (
-                  <div className="product-card" key={plantIndex}>
-                    <img
-                      className="product-image"
-                      src={plant.image}
-                      alt={plant.name}
-                    />
-                    <div className="product-title">{plant.name}</div>
-                    <div className="product-description">{plant.description}</div>
-                    <div className="product-cost">{plant.cost}</div>
-                    <button
-                      className="product-button"
-                      onClick={() => handleAddToCart(plant)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                ))}
+                {category.plants.map((plant, plantIndex) => {
+                  const itemExists = cartItems.find(item => item.name === plant.name);
+                  return (
+                    <div className="product-card" key={plantIndex}>
+                      <img
+                        className="product-image"
+                        src={plant.image}
+                        alt={plant.name}
+                      />
+                      <div className="product-title">{plant.name}</div>
+                      <div className="product-description">{plant.description}</div>
+                      <div className="product-cost">{plant.cost}</div>
+                      <button
+                        className="product-button"
+                        onClick={() => handleAddToCart(plant)}
+                        disabled={!!itemExists} // 🔹 deshabilita si ya está agregado
+                      >
+                        {itemExists ? "Added to Cart" : "Add to Cart"}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
